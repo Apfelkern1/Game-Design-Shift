@@ -53,7 +53,7 @@ namespace ShiftPrototype.Editor
 
             // Raum 3: two jumps
             Block("Startboden 3", 84.5f, -0.5f, 11, 1, Common, common);
-            Block("Zwischenstufe", 89, 0.8f, 2, 1.6f, Common, common);
+            Block("Zwischenstufe", 89, 0.8f, 2, 1.6f, Ruins, world.ruins.transform);
             Block("Hoher Absatz", 94, 1.6f, 8, 3.2f, Common, common);
             var cp3 = Zone("Checkpoint 3", 87, 0.75f, 0.7f, 1.5f, ShiftZone.ZoneType.Checkpoint, 2, common);
             cp3.respawnPoint = Point("Respawn 3", 86, 1, common);
