@@ -21,6 +21,7 @@ namespace ShiftPrototype
         public static bool JumpDown => Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
         public static bool JumpUp => Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame;
         public static bool JumpHeld => Keyboard.current != null && Keyboard.current.spaceKey.isPressed;
+        public static bool DashDown => Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
         public static bool SwapDown => Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
         public static bool ResetDown => Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame;
     }

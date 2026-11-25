@@ -31,6 +31,11 @@ namespace ShiftPrototype
         [Range(0, 0.3f)] public float maxCornerCorrection = 0.16f;
         public LayerMask solidLayers = ~0;
 
+        [Header("Dash")]
+        [Min(0.1f)]public float dashspeed = 20f;
+        [Min(0.01f)]public float dashDuration = 0.15f;
+
+
         public BoxCollider2D BodyCollider { get; private set; }
         public bool Grounded { get; private set; }
         Rigidbody2D body;
@@ -39,6 +44,15 @@ namespace ShiftPrototype
         float moveInput, jumpQueued, grace, holdRemaining;
         bool jumpHeld, releasedSinceStep;
         const float Skin = 0.01f;
+        //Dash
+        private bool isDashing = false;
+        private bool canDash = true;
+        private bool dashQueued = false;
+
+        private float dashRemaining;
+        private Vector2 dashDirection;
+        private Vector2 queuedDashDirection;
+        private int facingDirection = 1; 
 
         public Vector2 Velocity
         {
@@ -73,10 +87,25 @@ namespace ShiftPrototype
             }
             if (world != null && world.Completed) return;
             moveInput = ShiftInput.Move.x;
+            if (moveInput != 0)
+            {
+                facingDirection = (int)Mathf.Sign(moveInput);
+            }
             jumpHeld = ShiftInput.JumpHeld;
             // Save input in Update
             if (ShiftInput.JumpDown) jumpQueued = jumpBuffer;
             if (ShiftInput.JumpUp) releasedSinceStep = true;
+
+            if (ShiftInput.DashDown && !isDashing)
+            {
+                dashQueued = true;
+                queuedDashDirection = ShiftInput.Move.normalized;
+
+                if (queuedDashDirection == Vector2.zero)
+                {
+                    queuedDashDirection = new Vector2(facingDirection, 0);
+                }
+            }
             if (world != null && ShiftInput.SwapDown) world.TrySwap();
         }
 
@@ -89,6 +118,46 @@ namespace ShiftPrototype
             Vector2 v = Velocity;
             Grounded = v.y <= 0.01f && HasSurface(Vector2.down, 0.04f, Vector2.up);
             grace = Grounded ? coyoteTime : Mathf.Max(0, grace - dt);
+
+            //Recharge Dash
+            if (Grounded && !isDashing)
+            {   
+                canDash = true; 
+            }
+
+            //start Dash 
+
+            if(dashQueued && canDash && !isDashing)
+            {
+
+                isDashing = true;
+                canDash = false;
+                dashRemaining = dashDuration;
+                dashDirection = queuedDashDirection;
+
+                holdRemaining = 0;
+                jumpQueued = 0;
+                grace = 0;
+            }
+            dashQueued = false;
+
+            //Execute Dash
+            if (isDashing)
+            {
+                if (dashRemaining > 0)
+                {
+                    Velocity = dashDirection * dashspeed;
+                    dashRemaining -= dt;
+                    
+                    jumpQueued = Mathf.Max(0, jumpQueued -dt);
+                    return;
+                }
+
+                //End Dash
+                isDashing = false;
+                v.x = dashDirection.x * moveSpeed;
+                v.y = 0;
+            }
 
             // Releasing stops hold, even when pressed again
             if (releasedSinceStep || !jumpHeld) holdRemaining = 0;
@@ -200,6 +269,14 @@ namespace ShiftPrototype
             body.gravityScale = 0;
             jumpQueued = grace = holdRemaining = moveInput = 0;
             jumpHeld = releasedSinceStep = Grounded = false;
+            //reset Dash
+            isDashing = false;
+            canDash = true;
+            dashQueued = false;
+            dashRemaining = 0; 
+            dashDirection = Vector2.zero;
+            queuedDashDirection = Vector2.zero;
+            facingDirection = 1; 
             Physics2D.SyncTransforms();
         }
         public void Stop()
@@ -220,5 +297,7 @@ namespace ShiftPrototype
             coyoteTime = 0.1f; jumpBuffer = 0.12f;
             cornerCorrection = true; maxCornerCorrection = 0.16f;
         }
+
+
     }
 }
